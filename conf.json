@@ -1,0 +1,9 @@
+{
+        "portName": "com1",
+        "baudeRate": 11520,
+        "stopBit": "one_stop",
+	"parity": "NoParity",
+        "dataBits": 8,
+
+        "savePath": "./csv"
+}
