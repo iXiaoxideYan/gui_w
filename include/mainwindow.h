@@ -10,7 +10,7 @@
 #include <QMainWindow>
 
 // Set to one to enable debugging information, set to 0 to disable debugging information
-#define DEBUG_MODE 1
+// #define DEBUG_MODE 0
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -83,5 +83,6 @@ private:
     void updateLastDataReceivedTime() {
         m_lastDataReceivedTime = QDateTime::currentDateTime();
     }
+    void setValidDataTimerStart();
 };
 #endif // MAINWINDOW_H

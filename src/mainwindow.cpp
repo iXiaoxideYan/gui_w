@@ -122,7 +122,11 @@ void MainWindow::handleTimeout(const QByteArray &validData) {
     QDateTime endTime = QDateTime::currentDateTime();
     qint64 duration = m_validDataStartTime.msecsTo(endTime);
     QString durationInfo = "Duration of the valid data processing: " + QString::number(duration) + " ms";
+
+#ifdef DEBUG_MODE //1
     qDebug() << durationInfo;
+#endif
+
     updateDurationInfo(durationInfo);
 
     m_receivedData.clear();
@@ -130,9 +134,11 @@ void MainWindow::handleTimeout(const QByteArray &validData) {
 }
 
 bool MainWindow::isTimeoutReached(const QByteArray &validData) {
+
 #ifdef DEBUG_MODE //1
     qDebug() << ">> Diff: " + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch());
 #endif
+
     return (validData.size() >= m_expectedDataSize &&
             QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout && m_completeData == m_unvalidData);
 }
@@ -145,17 +151,16 @@ QByteArray MainWindow::extractValidData() {
     qDebug() << ">> m_receivedData: " + m_receivedData;
     qDebug() << ">> m_receivedData.length(): " + QString::number(m_receivedData.length());
 #endif
-    if (m_receivedData.length() > 12){
+    if (m_receivedData.length() > m_expectedDataSize){
         validData = m_receivedData;
         updateLastDataReceivedTime();
     }
-    // if (startIndex != -1) {
-    //     if (startIndex == 0) {
-    //         updateLastDataReceivedTime();
-    //     }
-    //     validData = (startIndex > 12) ? m_receivedData : m_receivedData.mid(startIndex);
-    // }
     return validData;
+}
+
+void MainWindow::setValidDataTimerStart()
+{
+    m_validDataStartTime = QDateTime::currentDateTime();
 }
 
 bool MainWindow::isInvalidData() {
@@ -165,11 +170,11 @@ bool MainWindow::isInvalidData() {
 void MainWindow::processData()
 {
     if(isInvalidData()){
-        if (m_receivedData.length() > 12 && isTimeoutReached(m_receivedData)){
+        if (m_receivedData.length() > m_expectedDataSize && isTimeoutReached(m_receivedData)){
             handleTimeout(m_receivedData);
         }
-        if (m_receivedData.length() < 12){
-            m_validDataStartTime = QDateTime::currentDateTime();
+        if (m_receivedData.length() < m_expectedDataSize){
+            setValidDataTimerStart();
         }
         return;
     }
@@ -192,7 +197,7 @@ void MainWindow::processData()
 
     m_receivedData.clear();
     m_receivedData.append(validData);
-#ifdef DEBUG_MODE // 1
+#ifdef DEBUG_MODE
     qDebug() << "m_receivedData: " + m_receivedData;
 #endif
 }
