@@ -8,25 +8,27 @@ CONFIG += c++17
 # In order to do so, uncomment the following line.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+INCLUDEPATH += include
+
 SOURCES += \
-    countdownhandler.cpp \
-    dataprocess.cpp \
-    file.cpp \
-    jsonmanager.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    qcustomplot.cpp \
-    serialportreader.cpp
+    src/countdownhandler.cpp \
+    src/dataprocess.cpp \
+    src/file.cpp \
+    src/jsonmanager.cpp \
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/qcustomplot.cpp \
+    src/serialportreader.cpp
 
 HEADERS += \
-    countdownhandler.h \
-    dataprocess.h \
-    datasmoother.h \
-    file.h \
-    jsonmanager.h \
-    mainwindow.h \
-    qcustomplot.h \
-    serialportreader.h
+    include/countdownhandler.h \
+    include/dataprocess.h \
+    include/datasmoother.h \
+    include/file.h \
+    include/jsonmanager.h \
+    include/mainwindow.h \
+    include/qcustomplot.h \
+    include/serialportreader.h
 
 FORMS += \
     mainwindow.ui
