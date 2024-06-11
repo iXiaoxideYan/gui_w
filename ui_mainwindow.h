@@ -45,10 +45,8 @@ public:
     QRadioButton *auto_complete;
     QRadioButton *overwritten;
     QPushButton *start;
-    QWidget *layoutWidget_2;
-    QHBoxLayout *horizontalLayout_4;
-    QLabel *label_duration;
     QLabel *m_countdownLabel;
+    QLabel *label_duration;
     QWidget *tab_2;
     QCustomPlot *backdrop;
     QPushButton *show;
@@ -70,7 +68,7 @@ public:
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         Page = new QTabWidget(centralwidget);
         Page->setObjectName(QString::fromUtf8("Page"));
-        Page->setGeometry(QRect(40, 40, 911, 571));
+        Page->setGeometry(QRect(40, 30, 911, 571));
         QSizePolicy sizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
         sizePolicy.setHorizontalStretch(0);
         sizePolicy.setVerticalStretch(0);
@@ -139,23 +137,13 @@ public:
 
         verticalLayout_2->addWidget(start);
 
-        layoutWidget_2 = new QWidget(home);
-        layoutWidget_2->setObjectName(QString::fromUtf8("layoutWidget_2"));
-        layoutWidget_2->setGeometry(QRect(70, 390, 731, 18));
-        horizontalLayout_4 = new QHBoxLayout(layoutWidget_2);
-        horizontalLayout_4->setObjectName(QString::fromUtf8("horizontalLayout_4"));
-        horizontalLayout_4->setContentsMargins(0, 0, 0, 0);
-        label_duration = new QLabel(layoutWidget_2);
-        label_duration->setObjectName(QString::fromUtf8("label_duration"));
-
-        horizontalLayout_4->addWidget(label_duration);
-
-        m_countdownLabel = new QLabel(layoutWidget_2);
+        m_countdownLabel = new QLabel(home);
         m_countdownLabel->setObjectName(QString::fromUtf8("m_countdownLabel"));
+        m_countdownLabel->setGeometry(QRect(250, 450, 362, 41));
         m_countdownLabel->setSizeIncrement(QSize(20, 20));
-
-        horizontalLayout_4->addWidget(m_countdownLabel);
-
+        label_duration = new QLabel(home);
+        label_duration->setObjectName(QString::fromUtf8("label_duration"));
+        label_duration->setGeometry(QRect(70, 390, 729, 31));
         Page->addTab(home, QString());
         tab_2 = new QWidget();
         tab_2->setObjectName(QString::fromUtf8("tab_2"));
@@ -188,7 +176,7 @@ public:
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName(QString::fromUtf8("menubar"));
-        menubar->setGeometry(QRect(0, 0, 988, 20));
+        menubar->setGeometry(QRect(0, 0, 988, 17));
         MainWindow->setMenuBar(menubar);
         statusbar = new QStatusBar(MainWindow);
         statusbar->setObjectName(QString::fromUtf8("statusbar"));
@@ -210,8 +198,8 @@ public:
         auto_complete->setText(QCoreApplication::translate("MainWindow", "Auto", nullptr));
         overwritten->setText(QCoreApplication::translate("MainWindow", "Overwriten", nullptr));
         start->setText(QCoreApplication::translate("MainWindow", "start", nullptr));
-        label_duration->setText(QString());
         m_countdownLabel->setText(QString());
+        label_duration->setText(QString());
         Page->setTabText(Page->indexOf(home), QCoreApplication::translate("MainWindow", "Home", nullptr));
         show->setText(QCoreApplication::translate("MainWindow", "show", nullptr));
         label_filepath->setText(QCoreApplication::translate("MainWindow", "File Path:", nullptr));

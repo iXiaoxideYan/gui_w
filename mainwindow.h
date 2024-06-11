@@ -1,13 +1,16 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-// #include "countdownhandler.h"
+#include "countdownhandler.h"
 #include "datasmoother.h"
 #include "serialportreader.h"
 
 // #include "graphhandler.h"
 #include <QLabel>
 #include <QMainWindow>
+
+// Set to one to enable debugging information, set to 0 to disable debugging information
+#define DEBUG_MODE 1
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -48,11 +51,11 @@ private slots:
 
     void timeout();
 
-    void updateCountdown();
-
 private:
     Ui::MainWindow *ui;
     QString m_configFilePath;
+    QByteArray m_partialData;
+    QByteArray m_completeData;
     SerialPortReader *m_reader;
     QByteArray m_receivedData;
     QDateTime m_lastDataReceivedTime;
@@ -65,12 +68,20 @@ private:
     double m_displayDuration = 20.0;
     DataSmoother dataSmoother;
     // GraphHandler graphHandler;
-    // CountdownHandler countdownHandler;
+    CountdownHandler *countdownHandler;
     QTimer *m_countdownTimer;
     int m_countdownValue;
 
     void setupUI();
     void configureGraph();
-    void startCountdown(int seconds);
+    void checkData(const QByteArray &data);
+    void processData();
+    bool isInvalidData();
+    bool isTimeoutReached(const QByteArray &validData);
+    void handleTimeout(const QByteArray &validData);
+    QByteArray extractValidData();
+    void updateLastDataReceivedTime() {
+        m_lastDataReceivedTime = QDateTime::currentDateTime();
+    }
 };
 #endif // MAINWINDOW_H

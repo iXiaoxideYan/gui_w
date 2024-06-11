@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>40</x>
-      <y>40</y>
+      <y>30</y>
       <width>911</width>
       <height>571</height>
      </rect>
@@ -110,37 +110,37 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="layoutWidget_2">
+     <widget class="QLabel" name="m_countdownLabel">
+      <property name="geometry">
+       <rect>
+        <x>250</x>
+        <y>450</y>
+        <width>362</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="sizeIncrement">
+       <size>
+        <width>20</width>
+        <height>20</height>
+       </size>
+      </property>
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_duration">
       <property name="geometry">
        <rect>
         <x>70</x>
         <y>390</y>
-        <width>731</width>
-        <height>18</height>
+        <width>729</width>
+        <height>31</height>
        </rect>
       </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_4">
-       <item>
-        <widget class="QLabel" name="label_duration">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="m_countdownLabel">
-         <property name="sizeIncrement">
-          <size>
-           <width>20</width>
-           <height>20</height>
-          </size>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-      </layout>
+      <property name="text">
+       <string/>
+      </property>
      </widget>
     </widget>
     <widget class="QWidget" name="tab_2">
@@ -214,7 +214,7 @@
      <x>0</x>
      <y>0</y>
      <width>988</width>
-     <height>20</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>

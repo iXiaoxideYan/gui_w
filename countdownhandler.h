@@ -10,10 +10,12 @@ class CountdownHandler : public QObject
 public:
     explicit CountdownHandler(QLabel *countdownLabel, QObject *parent = nullptr);
 
-    void startCountdown(int seconds);
+    void startCountdown(int seconds = 30);
+
+    QTimer *getCountdownTimer();
 
 private slots:
-    void updateCountdown();
+    void updateCountdownTime();
 
 private:
     QLabel *m_countdownLabel;

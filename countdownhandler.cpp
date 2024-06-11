@@ -10,7 +10,7 @@ CountdownHandler::CountdownHandler(QLabel *countdownLabel,
     , m_countdownLabel(countdownLabel)
 {
     m_countdownTimer = new QTimer(this);
-    connect(m_countdownTimer, &QTimer::timeout, this, &CountdownHandler::updateCountdown);
+    connect(m_countdownTimer, &QTimer::timeout, this, &CountdownHandler::updateCountdownTime);
 
     // Set the horizontal alignment of the text to right justified
     m_countdownLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
@@ -28,7 +28,7 @@ void CountdownHandler::startCountdown(int seconds)
     m_countdownTimer->start(1000); // Update every second
 }
 
-void CountdownHandler::updateCountdown()
+void CountdownHandler::updateCountdownTime()
 {
     m_countdownValue--;
     m_countdownLabel->setText("The remaining time: " + QString::number(m_countdownValue));
@@ -38,4 +38,8 @@ void CountdownHandler::updateCountdown()
         // Perform any additional actions when the countdown reaches zero
         // QMessageBox::information(this, "Countdown Finished", "The countdown has finished.");
     }
+}
+
+QTimer* CountdownHandler::getCountdownTimer(){
+    return m_countdownTimer;
 }

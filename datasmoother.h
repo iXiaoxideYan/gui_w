@@ -2,7 +2,7 @@
 #define DATASMOOTHER_H
 
 #include <QVector>
-
+#include <numeric>
 
 class DataSmoother {
 public:

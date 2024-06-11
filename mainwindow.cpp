@@ -9,17 +9,18 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_timeout(10)
     , dataSmoother(5)
+    , countdownHandler(nullptr)
 {
     ui->setupUi(this);
     setupUI();
     configureGraph();
 
+    countdownHandler = new CountdownHandler(ui->m_countdownLabel, this);
+
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::timeout);
-
-    m_countdownTimer = new QTimer(this);
-    connect(m_countdownTimer, &QTimer::timeout, this, &MainWindow::updateCountdown);
 
     m_unvalidData = "0.00\r\n";
 }
@@ -94,115 +95,137 @@ void MainWindow::setSerialPortReader(SerialPortReader *reader)
     m_reader = reader;
 }
 
-void MainWindow::startCountdown(int seconds)
-{
-    m_countdownValue = seconds;
-    ui->m_countdownLabel->setText("The remaining time: " + QString::number(m_countdownValue));
-    m_countdownTimer->start(1000); // Update every second
+void MainWindow::handleTimeout(const QByteArray &validData) {
+    QByteArray completeData = validData;
+
+#ifdef DEBUG_MODE //1
+    qDebug() << ">>**************************************** Finished!";
+#endif
+
+    double maxValue = getMaxValueFromByteArray(completeData);
+
+    QString csvFile = this->m_savePath + "/max_" + ui->line_code->text() + "_" + ui->line_trial->text() + ".csv";
+    saveCSV(csvFile, QString::number(maxValue));
+
+    QAbstractButton *button = ui->button_group->checkedButton();
+    if(button->text() == ui->auto_complete->text()){
+        int trial_num = ui->line_trial->text().toInt();
+        qDebug() << QString::number(trial_num).toLatin1();
+        ui->line_trial->setText(QString::number(trial_num + 1));
+    } else {
+        // reset all the input
+        ui->line_trial->clear();
+        ui->line_code->clear();
+    }
+
+    // Measure and log the time duration of the valid data processing
+    QDateTime endTime = QDateTime::currentDateTime();
+    qint64 duration = m_validDataStartTime.msecsTo(endTime);
+    QString durationInfo = "Duration of the valid data processing: " + QString::number(duration) + " ms";
+    qDebug() << durationInfo;
+    updateDurationInfo(durationInfo);
+
+    m_receivedData.clear();
+    m_lastDataReceivedTime = QDateTime::currentDateTime();
 }
 
-void MainWindow::updateCountdown()
-{
-    m_countdownValue--;
-    ui->m_countdownLabel->setText("The remaining time: " + QString::number(m_countdownValue));
-
-    if (m_countdownValue <= 0) {
-        m_countdownTimer->stop();
-        // Perform any additional actions when the countdown reaches zero
-        // QMessageBox::information(this, "Countdown Finished", "The countdown has finished.");
-        ui->m_countdownLabel->setText("Countdown Finished.");
-    }
+bool MainWindow::isTimeoutReached(const QByteArray &validData) {
+#ifdef DEBUG_MODE //1
+    qDebug() << ">> Diff: " + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch());
+#endif
+    return (validData.size() >= m_expectedDataSize &&
+            QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout && m_completeData == m_unvalidData);
 }
 
-void MainWindow::handleDataReceived(const QByteArray &data){
-    // Check if participant code is entered
-    if(ui->line_code->text().isEmpty()){
-        QMessageBox::critical(this, "Warning of errors", tr("Participant code is mandatory"));
-        return;
-    }
-
-    // Check if trial number is entered
-    if(ui->line_trial->text().isEmpty()){
-        QMessageBox::critical(this, "Warning of errors", tr("trial is mandatory"));
-        return;
-    }
-
-    m_receivedData.append(data);
-    qDebug() << ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> The new round: ";
-    qDebug() << m_receivedData;
-    qDebug() << ">> Data size: " + QString::number(data.size());
-    qDebug() << m_receivedData.size();
-
-    int startIndex = m_receivedData.lastIndexOf("0.00\r\n");
-    qDebug() << "startIndex: " + QString::number(startIndex);
-
-    if (startIndex != -1) {
-        // Check if it's a single occurrence at the beginning or near the end
-        if (startIndex == 0) {
-            // Update last data received time and continue waiting
-            m_lastDataReceivedTime = QDateTime::currentDateTime();
-        }
-    }else {
-        return;
-    }
-
-    if (!m_countdownTimer->isActive()) {
-        // Start the countdown only if it's not already running
-        startCountdown(30); // Start the countdown for 10 seconds, for example
-    }
-
+QByteArray MainWindow::extractValidData() {
     QByteArray validData;
-    if (startIndex > 12){
+    int startIndex = m_receivedData.lastIndexOf(m_unvalidData);
+#ifdef DEBUG_MODE //1
+    qDebug() << ">> startIndex: " + QString::number(startIndex);
+    qDebug() << ">> m_receivedData: " + m_receivedData;
+    qDebug() << ">> m_receivedData.length(): " + QString::number(m_receivedData.length());
+#endif
+    if (m_receivedData.length() > 12){
         validData = m_receivedData;
-    }else{
-        validData = m_receivedData.mid(startIndex);
+        updateLastDataReceivedTime();
+    }
+    // if (startIndex != -1) {
+    //     if (startIndex == 0) {
+    //         updateLastDataReceivedTime();
+    //     }
+    //     validData = (startIndex > 12) ? m_receivedData : m_receivedData.mid(startIndex);
+    // }
+    return validData;
+}
+
+bool MainWindow::isInvalidData() {
+    return m_completeData == m_unvalidData;
+}
+
+void MainWindow::processData()
+{
+    if(isInvalidData()){
+        if (m_receivedData.length() > 12 && isTimeoutReached(m_receivedData)){
+            handleTimeout(m_receivedData);
+        }
+        if (m_receivedData.length() < 12){
+            m_validDataStartTime = QDateTime::currentDateTime();
+        }
+        return;
     }
 
-    qDebug() << "Valid data: " << validData;
-    qDebug() << "The size of validData: " + QString::number(validData.size());
+    m_receivedData.append(m_completeData);
+    QByteArray validData = extractValidData();
 
-    if (startIndex == 6) {
-        // Update last data received time and continue waiting
-        m_validDataStartTime = QDateTime::currentDateTime();
+#ifdef DEBUG_MODE // 1
+    qDebug() << "validData: " + validData;
+#endif
+
+    if (validData.isEmpty()) {
+        return;
+    }
+
+    if (!countdownHandler->getCountdownTimer()->isActive()) {
+        // Start the countdown only if it's not already running
+        countdownHandler->startCountdown();
     }
 
     m_receivedData.clear();
     m_receivedData.append(validData);
+#ifdef DEBUG_MODE // 1
+    qDebug() << "m_receivedData: " + m_receivedData;
+#endif
+}
 
-
-    if (startIndex != 0 && m_receivedData.size() >= m_expectedDataSize &&
-        QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout) {
-
-        QByteArray completeData = validData.left(6);
-
-        qDebug() << ">>**************************************** Finished!";
-
-        double maxValue = getMaxValueFromByteArray(completeData);
-
-        QString csvFile = this->m_savePath + "/max_" + ui->line_code->text() + "_" + ui->line_trial->text() + ".csv";
-        saveCSV(csvFile, QString::number(maxValue));
-
-        QAbstractButton *button = ui->button_group->checkedButton();
-        if(button->text() == ui->auto_complete->text()){
-            int trial_num = ui->line_trial->text().toInt();
-            qDebug() << QString::number(trial_num).toLatin1();
-            ui->line_trial->setText(QString::number(trial_num + 1));
-        } else {
-            // reset all the input
-            ui->line_trial->clear();
-            ui->line_code->clear();
-        }
-
-        // Measure and log the time duration of the valid data processing
-        QDateTime endTime = QDateTime::currentDateTime();
-        qint64 duration = m_validDataStartTime.msecsTo(endTime);
-        QString durationInfo = "Duration of the valid data processing: " + QString::number(duration) + " ms";
-        qDebug() << durationInfo;
-        updateDurationInfo(durationInfo);
-
-        m_receivedData.clear();
-        m_lastDataReceivedTime = QDateTime::currentDateTime();
+void MainWindow::checkData(const QByteArray &data) {
+    // Check if participant code and trial number are entered
+    if(ui->line_code->text().isEmpty() || ui->line_trial->text().isEmpty()){
+        QMessageBox::critical(this, "Warning of errors", tr("Participant code and trial number are mandatory"));
+        return;
     }
+
+    // If there is incomplete data in the partial data buffer, append the new data to it
+    if (!m_partialData.isEmpty()) {
+        m_partialData.append(data);
+    } else {
+        m_partialData = data;
+    }
+
+    // If the concatenated data ends with "\r\n", process the complete data
+    if (m_partialData.endsWith("\r\n")) {
+
+#ifdef DEBUG_MODE //1
+        qDebug() << ">> Complete data: " + m_partialData;
+#endif
+
+        m_completeData = m_partialData;
+        processData();
+        m_partialData.clear();
+    }
+}
+
+void MainWindow::handleDataReceived(const QByteArray &data){
+    checkData(data);
 }
 
 void MainWindow::on_show_clicked()
