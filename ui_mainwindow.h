@@ -139,7 +139,7 @@ public:
 
         m_countdownLabel = new QLabel(home);
         m_countdownLabel->setObjectName(QString::fromUtf8("m_countdownLabel"));
-        m_countdownLabel->setGeometry(QRect(250, 450, 362, 41));
+        m_countdownLabel->setGeometry(QRect(160, 450, 531, 41));
         m_countdownLabel->setSizeIncrement(QSize(20, 20));
         label_duration = new QLabel(home);
         label_duration->setObjectName(QString::fromUtf8("label_duration"));

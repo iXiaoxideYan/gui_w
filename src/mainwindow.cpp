@@ -11,18 +11,18 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , m_timeout(10)
     , dataSmoother(5)
+    , graphHandler(nullptr)
     , countdownHandler(nullptr)
 {
     ui->setupUi(this);
     setupUI();
-    configureGraph();
+    // configureGraph();
 
     countdownHandler = new CountdownHandler(ui->m_countdownLabel, this);
+    graphHandler = new GraphHandler(ui->backdrop, this);
 
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, &MainWindow::timeout);
-
-    m_unvalidData = "0.00\r\n";
 }
 
 MainWindow::~MainWindow()
@@ -50,12 +50,12 @@ void MainWindow::setupUI()
     ui->m_countdownLabel->setFont(font);
 }
 
-void MainWindow::configureGraph()
-{
-    ui->backdrop->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-    ui->backdrop->xAxis->setLabel("Time");
-    ui->backdrop->yAxis->setLabel("Value");
-}
+// void MainWindow::configureGraph()
+// {
+//     ui->backdrop->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+//     ui->backdrop->xAxis->setLabel("Time");
+//     ui->backdrop->yAxis->setLabel("Value");
+// }
 
 void MainWindow::setConfigFilePath(const QString &filePath)
 {
@@ -145,9 +145,9 @@ bool MainWindow::isTimeoutReached(const QByteArray &validData) {
 
 QByteArray MainWindow::extractValidData() {
     QByteArray validData;
-    int startIndex = m_receivedData.lastIndexOf(m_unvalidData);
+    // int startIndex = m_receivedData.lastIndexOf(m_unvalidData);
 #ifdef DEBUG_MODE //1
-    qDebug() << ">> startIndex: " + QString::number(startIndex);
+    // qDebug() << ">> startIndex: " + QString::number(startIndex);
     qDebug() << ">> m_receivedData: " + m_receivedData;
     qDebug() << ">> m_receivedData.length(): " + QString::number(m_receivedData.length());
 #endif
@@ -202,22 +202,39 @@ void MainWindow::processData()
 #endif
 }
 
-void MainWindow::checkData(const QByteArray &data) {
-    // Check if participant code and trial number are entered
-    if(ui->line_code->text().isEmpty() || ui->line_trial->text().isEmpty()){
-        QMessageBox::critical(this, "Warning of errors", tr("Participant code and trial number are mandatory"));
-        return;
-    }
+bool MainWindow::isDataComplete() const {
+    return m_partialData.endsWith("\r\n");
+}
 
-    // If there is incomplete data in the partial data buffer, append the new data to it
+void MainWindow::restructureIncompleteData(const QByteArray &data) {
     if (!m_partialData.isEmpty()) {
         m_partialData.append(data);
     } else {
         m_partialData = data;
     }
+}
+
+void MainWindow::showErrorMessage()
+{
+    QMessageBox::critical(this, "Warning of errors", tr("Participant code and trial number are mandatory"));
+}
+
+bool MainWindow::isParticipantInfoEntered() const {
+    return !ui->line_code->text().isEmpty() && !ui->line_trial->text().isEmpty();
+}
+
+void MainWindow::checkData(const QByteArray &data) {
+    // Check if participant code and trial number are entered
+    if(!isParticipantInfoEntered()){
+        showErrorMessage();
+        return;
+    }
+
+    // If there is incomplete data in the partial data buffer, append the new data to it
+    restructureIncompleteData(data);
 
     // If the concatenated data ends with "\r\n", process the complete data
-    if (m_partialData.endsWith("\r\n")) {
+    if (isDataComplete()) {
 
 #ifdef DEBUG_MODE //1
         qDebug() << ">> Complete data: " + m_partialData;
@@ -233,46 +250,7 @@ void MainWindow::handleDataReceived(const QByteArray &data){
     checkData(data);
 }
 
-void MainWindow::on_show_clicked()
-{
-    ui->backdrop->clearPlottables();
-
-    // Get the file path entered by the user
-    QString filePath = ui->filepath->text();
-
-    // If the user does not enter the file path, use the default path
-    if (filePath.isEmpty()) {
-        // filePath = "./data.txt";
-
-        if(!this->m_reader->isSerialPortOpen()){
-            if(this->m_reader->openSerialPort()){
-                qWarning() << "Failed to open serial port, Please check the config file.";
-                return;
-            }
-        }
-
-        connect(m_reader, &SerialPortReader::dataReceived, this, &MainWindow::handleDisplayRealTimeData);
-
-        return;
-    }
-
-    if (!checkFile(filePath)) {
-        QMessageBox::critical(this, "Tips", tr("Cannot find the file you enter"));
-        ui->backdrop->replot();
-        return;
-    }
-
-    QVector<double> yData = readFileData(filePath);
-
-    if(yData.empty()){
-        qWarning() << "Cannot find the data file. ";
-        return;
-    }
-
-    qDebug() << yData.length();
-    QVector<double> xData;
-    for (int i = 0; i < yData.size(); ++i)
-        xData.push_back(i);
+void MainWindow::plotData(const QVector<double> &xData, const QVector<double> &yData) {
 
     ui->backdrop->addGraph();
     ui->backdrop->graph(0)->setData(xData, yData);
@@ -283,11 +261,76 @@ void MainWindow::on_show_clicked()
     ui->backdrop->replot();
 }
 
+void MainWindow::handleFileMode(const QString &filePath) {
+    if (!checkFile(filePath)) {
+        QMessageBox::critical(this, "Tips", tr("Cannot find the file you enter"));
+        ui->backdrop->replot();
+        return;
+    }
+
+    QVector<double> yData = readFileData(filePath);
+
+    if (yData.empty()) {
+        qWarning() << "Cannot find the data file.";
+        return;
+    }
+
+    qDebug() << yData.length();
+    QVector<double> xData;
+    for (int i = 0; i < yData.size(); ++i) {
+        xData.push_back(i);
+    }
+
+    plotData(xData, yData);
+}
+
+
+void MainWindow::handleRealTimeMode() {
+    if (!m_reader->isSerialPortOpen()) {
+        if (!m_reader->openSerialPort()) {
+            qWarning() << "Failed to open serial port, Please check the config file.";
+            return;
+        }
+    }
+
+    connect(m_reader, &SerialPortReader::dataReceived, graphHandler, &GraphHandler::handleDataReceived);
+}
+
+
+bool MainWindow::isRealTimeMode(const QString &filePath) const {
+    return filePath.isEmpty();
+}
+
+QString MainWindow::getFilePath() const {
+    return ui->filepath->text();
+}
+
+void MainWindow::clearPlot() {
+    ui->backdrop->clearPlottables();
+}
+
+void MainWindow::on_show_clicked()
+{
+    clearPlot();
+
+    // Get the file path entered by the user
+    QString filePath = getFilePath();
+
+    // If the user does not enter the file path, show data in real time
+    if (isRealTimeMode(filePath)) {
+        handleRealTimeMode();
+    }else{
+        handleFileMode(filePath);
+    }
+}
+
 void MainWindow::timeout()
 {
     if (QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout &&
         m_receivedData.size() >= m_expectedDataSize) {
+#ifdef DEBUG_MODE //1
         qDebug() << ">> timeout!";
+#endif
         m_receivedData.clear();
     }
 }
@@ -296,109 +339,9 @@ void MainWindow::updateDurationInfo(const QString &info) {
     ui->label_duration->setText(info);
 }
 
-void MainWindow::updateGraph(double &value, double &timestamp) {
-    // If there is no graphic object in the chart, add a
-    if (ui->backdrop->graphCount() == 0) {
-        ui->backdrop->addGraph();
-    }
-    // Add new data points to the chart
-    ui->backdrop->graph(0)->addData(timestamp, value);
-
-    // Get the current time
-    double currentTime =
-        QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
-
-    // Set the X-axis range
-    double minX = currentTime - m_displayDuration;
-    double maxX = currentTime;
-    ui->backdrop->xAxis->setRange(minX, maxX);
-
-    // Get the maximum value of the Y-axis
-    double maxValue = ui->backdrop->yAxis->range().upper;
-
-    // Update the Y-axis range to adapt to the new data
-    if (value > maxValue) {
-        maxValue = value;
-    }
-    ui->backdrop->yAxis->setRange(0, maxValue);
-
-    // Redraw the chart
-    ui->backdrop->replot();
-}
-
-void MainWindow::handleDisplayRealTimeData(const QByteArray &data) {
-    QString strData = QString::fromLatin1(data).trimmed();
-
-    // Check whether the data is invalid
-    if (strData == "0.00") {
-        qDebug() << "Invalid data received: " << strData;
-        return;
-    }
-
-    // Find the location of the first non-zero character
-    int startIndex = strData.indexOf(QRegularExpression("[^0]"));
-    qDebug() << ">> startIndex:" + QString::number(startIndex);
-    if (startIndex != -1) {
-        strData = strData.mid(startIndex);
-        if (strData == "0") {
-            return;
-        }
-    } else {
-        return;
-    }
-
-    qDebug() << ">> data:" + strData;
-    bool ok;
-    double value = strData.toDouble(&ok);
-
-    // Check whether the string can be converted to a valid floating-point number
-    if (!ok) {
-        qDebug() << "Failed to parse data: " << strData;
-        return;
-    }
-
-    // Smooth the data
-    double smoothedValue = dataSmoother.smooth(value);
-
-    // Get the current timestamp
-    double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() / 1000.0;
-
-    updateGraph(smoothedValue, timestamp);
-
-    // graphHandler.handleDataReceived(data);
-    // QByteArray trimmedData = data.trimmed();
-
-    // qDebug() << trimmedData;
-
-    // bool ok;
-    // double value = trimmedData.toDouble(&ok);
-
-    // if (ok) {
-    //     double timestamp = QDateTime::currentDateTime().toMSecsSinceEpoch() /
-    //     1000.0;
-
-    //     if (ui->backdrop->graphCount() == 0) {
-    //         ui->backdrop->addGraph();
-    //     }
-
-    //     ui->backdrop->graph(0)->addData(timestamp, value);
-
-    //     double currentTime = QDateTime::currentDateTime().toMSecsSinceEpoch() /
-    //     1000.0;
-
-    //     double minX = currentTime - m_displayDuration;
-    //     double maxX = currentTime;
-    //     ui->backdrop->xAxis->setRange(minX, maxX);
-    //     ui->backdrop->yAxis->rescale(true);
-    //     ui->backdrop->replot();
-    // } else {
-    //     qDebug() << "Failed to parse data: " << trimmedData;
-    // }
-}
-
 void MainWindow::on_exit_clicked()
 {
-    disconnect(m_reader, &SerialPortReader::dataReceived, this, &MainWindow::handleDisplayRealTimeData);
+    disconnect(m_reader, &SerialPortReader::dataReceived, graphHandler, &GraphHandler::handleDataReceived);
 
     ui->backdrop->clearPlottables();
     ui->backdrop->replot();

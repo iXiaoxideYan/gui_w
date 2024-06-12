@@ -3,6 +3,7 @@
 
 #include "countdownhandler.h"
 #include "datasmoother.h"
+#include "graphhandler.h"
 #include "serialportreader.h"
 
 // #include "graphhandler.h"
@@ -10,7 +11,7 @@
 #include <QMainWindow>
 
 // Set to one to enable debugging information, set to 0 to disable debugging information
-// #define DEBUG_MODE 0
+// #define DEBUG_MODE 1
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -37,10 +38,6 @@ private slots:
 
     void handleDataReceived(const QByteArray &data);
 
-    void updateGraph(double &value, double &timestamp);
-
-    void handleDisplayRealTimeData(const QByteArray &data);
-
     void updateDurationInfo(const QString &info);
 
     void on_start_clicked();
@@ -63,17 +60,17 @@ private:
     QString m_savePath;
     QTimer *m_timer;
     qint64 m_expectedDataSize;
-    QString m_unvalidData;
+    QString m_unvalidData = "0.00\r\n";
     QDateTime m_validDataStartTime;
     double m_displayDuration = 20.0;
     DataSmoother dataSmoother;
-    // GraphHandler graphHandler;
+    GraphHandler *graphHandler;
     CountdownHandler *countdownHandler;
     QTimer *m_countdownTimer;
     int m_countdownValue;
 
     void setupUI();
-    void configureGraph();
+    // void configureGraph();
     void checkData(const QByteArray &data);
     void processData();
     bool isInvalidData();
@@ -84,5 +81,15 @@ private:
         m_lastDataReceivedTime = QDateTime::currentDateTime();
     }
     void setValidDataTimerStart();
+    void showErrorMessage();
+    bool isParticipantInfoEntered() const;
+    bool isDataComplete() const;
+    void restructureIncompleteData(const QByteArray &data);
+    void clearPlot();
+    QString getFilePath() const;
+    bool isRealTimeMode(const QString &filePath) const;
+    void handleRealTimeMode();
+    void handleFileMode(const QString &filePath);
+    void plotData(const QVector<double> &xData, const QVector<double> &yData);
 };
 #endif // MAINWINDOW_H
