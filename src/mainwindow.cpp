@@ -35,12 +35,6 @@ void MainWindow::setupUI()
     ui->auto_complete->setChecked(true);
     ui->line_trial->setValidator(new QIntValidator(0, 9999, this));
     ui->Page->setTabPosition(QTabWidget::West);
-
-    QVBoxLayout *layout = new QVBoxLayout;
-    layout->addWidget(ui->show);
-    layout->addWidget(ui->backdrop);
-    layout->setAlignment(ui->show, Qt::AlignHCenter | Qt::AlignVCenter);
-    layout->setAlignment(ui->backdrop, Qt::AlignHCenter | Qt::AlignVCenter);
 }
 
 void MainWindow::setConfigFilePath(const QString &filePath)

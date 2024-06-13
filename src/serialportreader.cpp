@@ -57,7 +57,6 @@ bool SerialPortReader::readConfigFromFile(const QString &filePath)
 
     m_portName = config.value("portName").toString();
     m_baudRate = config.value("baudeRate").toInt();
-    // qDebug() << QString::number(m_baudRate);
     m_dataBits = static_cast<QSerialPort::DataBits>(config.value("dataBits").toInt());
     m_stopBits = static_cast<QSerialPort::StopBits>(config.value("stopBits").toInt());
     m_parity = static_cast<QSerialPort::Parity>(config.value("parity").toInt());

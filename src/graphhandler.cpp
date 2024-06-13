@@ -17,9 +17,14 @@ GraphHandler::~GraphHandler()
 
 void GraphHandler::configureGraph()
 {
-    m_plot->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    // m_plot->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     m_plot->xAxis->setLabel("Time");
     m_plot->yAxis->setLabel("Value");
+
+    m_plot->xAxis->setRange(0, 10);
+    m_plot->yAxis->setRange(0, 100);
+
+    m_plot->replot();
 }
 
 void GraphHandler::updateYAxisRange(double value)
