@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
         filePath = QString(argv[1]);
     }
 
-    if (!checkFile(filePath)) {
+    if (!fileExists(filePath)) {
         return -1; // Exit the program with an error code
     }
 

@@ -3,13 +3,7 @@
 #include <QTextStream>
 #include <QDebug>
 
-/**
- * Writes data to a CSV file.
- *
- * @param file A reference to the QFile object representing the CSV file.
- * @param data The data to be written to the CSV file as a QString.
- * @return true if the write operation succeeds, false otherwise.
- */
+
 void writeCSV(QFile &file, QString data){
     if(file.open(QFile::WriteOnly | QFile::Truncate)){
         QTextStream out(&file);
@@ -30,76 +24,66 @@ void writeCSV(QFile &file, QStringList data){
     file.close();
 }
 
-/**
- * Checks if a directory exists at the specified path. If not, creates it.
- *
- * @param dirPath The path of the directory to check/create.
- * @return true if the directory exists or is successfully created, false otherwise.
- */
-bool checkDir(QString dirPath){
-    QDir dir(dirPath);
-
-    // Check if the directory exists
-    if (dir.exists()) {
-        return true; // Directory already exists
-    } else {
-        // Attempt to create the directory
-        if (dir.mkpath(dirPath)) {
-            qDebug() << ">> Created directory:" << dirPath;
-            return true;
-        } else {
-            qWarning() << "checkDir: Failed to create directory:" << dirPath;
-            return false;
-        }
-    }
-}
-
-bool isCSVExists(QString filePath){
+bool saveListToCSV(const QList<QByteArray> &dataList, const QString &filePath){
     QFile file(filePath);
-
-    // Get the directory path of the file
-    QFileInfo info(filePath);
-    QString dirPath = info.absolutePath();
-
-    // Check if the directory exists, create it if not
-    if (!checkDir(dirPath)) {
-        qWarning() << "isCSVExists: Failed to create directory" << dirPath;
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         return false;
     }
 
-    // Check if the file exists
-    if (file.exists()) {
-        qDebug(">> The file exits");
-        return true;
-    } else{
-        // Attempt to create the file
-        file.open(QIODevice::Append);
-        file.close();
-        qDebug() << ">> The file exists";
-        if (file.open(QIODevice::WriteOnly)) {
-            file.close();
-            qDebug() << ">> Created the file successfully";
-            return true;
-        } else {
-            qWarning() << "isCSVExists: Failed to create the file";
-            return false;
-        }
+    QTextStream out(&file);
+    for (const QByteArray &value : dataList) {
+        out << value;
     }
+
+    file.close();
+    return true;
+}
+
+bool createDirectory(const QString &dirPath) {
+    QDir dir;
+    if (dir.exists(dirPath)) {
+        return true;
+    }
+    return dir.mkpath(dirPath);
+}
+
+bool checkDir(QString dirPath){
+    return createDirectory(dirPath);
 }
 
 void saveCSV(QString filePth, QString data){
-    isCSVExists(filePth);
+    checkFile(filePth);
     QFile myFile(filePth);
     writeCSV(myFile, data);
 }
 
-bool checkFile(const QString &filePath) {
+bool createFile(const QString &filePath) {
     QFile file(filePath);
-    if (!file.exists()) {
-        qWarning() << "File does not exist:" << filePath;
+    if (file.open(QIODevice::WriteOnly)) {
+        file.close();
+        return true;
+    }
+    return false;
+}
+
+bool fileExists(const QString &filePath) {
+    QFile file(filePath);
+    return file.exists();
+}
+
+bool checkFile(const QString &filePath) {
+    if (fileExists(filePath)) {
+        qDebug() << "File exists:" << filePath;
+        return true;
+    }
+
+    if (createFile(filePath)) {
+        qDebug() << "File created successfully:" << filePath;
+        return true;
+    } else {
+        qWarning() << "Failed to create file:" << filePath;
         return false;
     }
-    return true;
 }
 
 QVector<double> readFileData(const QString &fileName){

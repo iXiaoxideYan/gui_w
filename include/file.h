@@ -21,13 +21,15 @@ void writeCSV(QFile &file, QString data);
  */
 void writeCSV(QFile &file, QStringList data);
 
+bool saveListToCSV(const QList<QByteArray> &dataList, const QString &filePath);
+
 /**
  * Checks if a CSV file exists at the specified file path.
  *
  * @param filePath The path of the CSV file to check.
  * @return true if the CSV file exists, false otherwise.
  */
-bool isCSVExists(QString filePath);
+// bool isCSVExists(QString filePath);
 
 /**
  * Checks if a directory exists at the specified path.
@@ -47,18 +49,43 @@ bool checkDir(QString dirPath);
 void saveCSV(QString filePth, QString data);
 
 /**
- * Checks if the file exists.
+ * @brief Checks if the file exists at the specified path.
  *
- * @param filePath The path to thefile.
- * @return True if the file exists, false otherwise.
+ * @param filePath The path of the file to check.
+ * @return true if the file exists, otherwise false.
+ */
+bool fileExists(const QString &filePath);
+
+/**
+ * @brief Creates a file at the specified path.
+ *
+ * @param filePath The path of the file to create.
+ * @return true if the file was created successfully, otherwise false.
+ */
+bool createFile(const QString &filePath);
+
+/**
+ * @brief Creates a directory at the specified path.
+ *
+ * @param dirPath The path of the directory to create.
+ * @return true if the directory was created successfully or already exists, otherwise false.
+ */
+bool createDirectory(const QString &dirPath);
+
+/**
+ * @brief Checks if the file exists and creates it if it doesn't.
+ *
+ * @param filePath The path of the file to check or create.
+ * @return true if the file exists or was created successfully, otherwise false.
  */
 bool checkFile(const QString &filePath);
 
 /**
- * Reads data from a file and returns it as a QVector<double>.
+ * @brief Reads numeric data from a text file and stores it in a QVector<double>.
  *
- * @param fileName The name of the file to read data from.
- * @return A QVector<double> containing the read data.
+ * @param fileName The path of the file to read.
+ * @return A QVector<double> containing the read data. If the file cannot be opened
+ * or read, an empty QVector<double> is returned.
  */
 QVector<double> readFileData(const QString &fileName);
 

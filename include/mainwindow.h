@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "countdownhandler.h"
+#include "dataprocessor.h"
 #include "datasmoother.h"
 #include "graphhandler.h"
 #include "serialportreader.h"
@@ -11,7 +12,7 @@
 #include <QMainWindow>
 
 // Set to one to enable debugging information, set to 0 to disable debugging information
-// #define DEBUG_MODE 1
+#define DEBUG_MODE 1
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -65,6 +66,7 @@ private:
     double m_displayDuration = 20.0;
     DataSmoother dataSmoother;
     GraphHandler *graphHandler;
+    DataProcessor *dataProcessor;
     CountdownHandler *countdownHandler;
     QTimer *m_countdownTimer;
     int m_countdownValue;
@@ -91,5 +93,8 @@ private:
     void handleRealTimeMode();
     void handleFileMode(const QString &filePath);
     void plotData(const QVector<double> &xData, const QVector<double> &yData);
+    void saveMaxValueToFile(QByteArray &rawData);
+    void saveRawDataToFile(QByteArray &rawData);
+    QString generateFilePath(const QString &prefix, const QString &suffix);
 };
 #endif // MAINWINDOW_H

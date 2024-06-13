@@ -21,6 +21,7 @@ private:
     QLabel *m_countdownLabel;
     QTimer *m_countdownTimer;
     int m_countdownValue;
+    void ajustLabelSize();
 };
 
 #endif // COUNTDOWNHANDLER_H

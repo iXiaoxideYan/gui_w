@@ -4,7 +4,7 @@
         "stopBit": "one_stop",
 	"parity": "NoParity",
         "dataBits": 8,
-	"timeOut": 100,
+	"timeOut": 1000,
 	"expectedDataSize": 12,
         "savePath": "./csv"
 }

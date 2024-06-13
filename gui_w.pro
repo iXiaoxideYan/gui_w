@@ -10,9 +10,9 @@ CONFIG += c++17
 
 INCLUDEPATH += include
 SOURCES += \
+    src/dataprocessor.cpp \
     src/graphhandler.cpp \
     src/countdownhandler.cpp \
-    src/dataprocess.cpp \
     src/file.cpp \
     src/jsonmanager.cpp \
     src/main.cpp \
@@ -22,7 +22,7 @@ SOURCES += \
 
 HEADERS += \
     include/countdownhandler.h \
-    include/dataprocess.h \
+    include/dataprocessor.h \
     include/datasmoother.h \
     include/file.h \
     include/graphhandler.h \

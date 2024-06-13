@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "file.h"
-#include "dataprocess.h"
+#include "dataprocessor.h"
 #include "ui_mainwindow.h"
 #include "jsonmanager.h"
 #include <QIntValidator>
@@ -12,11 +12,11 @@ MainWindow::MainWindow(QWidget *parent)
     , m_timeout(10)
     , dataSmoother(5)
     , graphHandler(nullptr)
+    , dataProcessor()
     , countdownHandler(nullptr)
 {
     ui->setupUi(this);
     setupUI();
-    // configureGraph();
 
     countdownHandler = new CountdownHandler(ui->m_countdownLabel, this);
     graphHandler = new GraphHandler(ui->backdrop, this);
@@ -41,21 +41,7 @@ void MainWindow::setupUI()
     layout->addWidget(ui->backdrop);
     layout->setAlignment(ui->show, Qt::AlignHCenter | Qt::AlignVCenter);
     layout->setAlignment(ui->backdrop, Qt::AlignHCenter | Qt::AlignVCenter);
-
-    ui->m_countdownLabel->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-
-    // Create a new font object and set the font size
-    QFont font = ui->m_countdownLabel->font();
-    font.setPointSize(24);
-    ui->m_countdownLabel->setFont(font);
 }
-
-// void MainWindow::configureGraph()
-// {
-//     ui->backdrop->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
-//     ui->backdrop->xAxis->setLabel("Time");
-//     ui->backdrop->yAxis->setLabel("Value");
-// }
 
 void MainWindow::setConfigFilePath(const QString &filePath)
 {
@@ -95,6 +81,35 @@ void MainWindow::setSerialPortReader(SerialPortReader *reader)
     m_reader = reader;
 }
 
+QString MainWindow::generateFilePath(const QString &prefix, const QString &suffix) {
+    auto placeholder = ui->line_code->text() + "_" + ui->line_trial->text();
+    QString dirPath = m_savePath + "/" + placeholder;
+#ifdef DEBUG_MODE //1
+    qDebug() << "The file path: " + dirPath;
+#endif
+    // Ensure the directory exists
+    checkDir(dirPath);
+
+    return dirPath + "/" + prefix + "_" + placeholder + suffix;
+}
+
+void MainWindow::saveMaxValueToFile(QByteArray &rawData)
+{
+    double maxValue = dataProcessor->getMaxValueFromByteArray(rawData);
+
+    QString csvFile = generateFilePath("max_value", ".csv");
+
+    saveCSV(csvFile, QString::number(maxValue));
+}
+
+void MainWindow::saveRawDataToFile(QByteArray &rawData)
+{
+    QList<QByteArray> raw = dataProcessor->getRawData(rawData);
+
+    QString csvFile = generateFilePath("raw_data", ".csv");
+    saveListToCSV(raw, csvFile);
+}
+
 void MainWindow::handleTimeout(const QByteArray &validData) {
     QByteArray completeData = validData;
 
@@ -102,10 +117,9 @@ void MainWindow::handleTimeout(const QByteArray &validData) {
     qDebug() << ">>**************************************** Finished!";
 #endif
 
-    double maxValue = getMaxValueFromByteArray(completeData);
+    saveRawDataToFile(completeData);
 
-    QString csvFile = this->m_savePath + "/max_" + ui->line_code->text() + "_" + ui->line_trial->text() + ".csv";
-    saveCSV(csvFile, QString::number(maxValue));
+    saveMaxValueToFile(completeData);
 
     QAbstractButton *button = ui->button_group->checkedButton();
     if(button->text() == ui->auto_complete->text()){
@@ -262,7 +276,7 @@ void MainWindow::plotData(const QVector<double> &xData, const QVector<double> &y
 }
 
 void MainWindow::handleFileMode(const QString &filePath) {
-    if (!checkFile(filePath)) {
+    if (!fileExists(filePath)) {
         QMessageBox::critical(this, "Tips", tr("Cannot find the file you enter"));
         ui->backdrop->replot();
         return;
