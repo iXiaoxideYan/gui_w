@@ -6,214 +6,229 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>988</width>
-    <height>689</height>
+    <width>936</width>
+    <height>606</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QTabWidget" name="Page">
-    <property name="geometry">
-     <rect>
-      <x>40</x>
-      <y>30</y>
-      <width>911</width>
-      <height>571</height>
-     </rect>
-    </property>
-    <property name="sizePolicy">
-     <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-      <horstretch>0</horstretch>
-      <verstretch>0</verstretch>
-     </sizepolicy>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="currentIndex">
-     <number>0</number>
-    </property>
-    <widget class="QWidget" name="home">
-     <attribute name="title">
-      <string>Home</string>
-     </attribute>
-     <widget class="QWidget" name="layoutWidget">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>30</y>
-        <width>731</width>
-        <height>341</height>
-       </rect>
+   <layout class="QFormLayout" name="formLayout">
+    <item row="0" column="0" colspan="2">
+     <widget class="QTabWidget" name="Page">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
       </property>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout">
+      <property name="layoutDirection">
+       <enum>Qt::LeftToRight</enum>
+      </property>
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="home">
+       <attribute name="title">
+        <string>Home</string>
+       </attribute>
+       <layout class="QFormLayout" name="formLayout_2">
+        <item row="0" column="0" colspan="2">
+         <layout class="QFormLayout" name="formLayout_3">
+          <item row="0" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLabel" name="label_code">
+              <property name="text">
+               <string>Participant Code: </string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="line_code">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QLabel" name="label_trial">
+              <property name="text">
+               <string>Trial:                   #</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="line_trial"/>
+            </item>
+           </layout>
+          </item>
+          <item row="2" column="0" colspan="2">
+           <layout class="QVBoxLayout" name="verticalLayout">
+            <item>
+             <widget class="QRadioButton" name="auto_complete">
+              <property name="text">
+               <string>Auto</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">button_group</string>
+              </attribute>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="overwritten">
+              <property name="text">
+               <string>Overwriten</string>
+              </property>
+              <attribute name="buttonGroup">
+               <string notr="true">button_group</string>
+              </attribute>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item row="3" column="1">
+           <widget class="QPushButton" name="start">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>start</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QLabel" name="label_duration">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0" colspan="2">
+         <widget class="QLabel" name="m_countdownLabel">
+          <property name="sizeIncrement">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="dynamic">
+       <attribute name="title">
+        <string>Dynamic</string>
+       </attribute>
+       <widget class="QCustomPlot" name="backdrop" native="true">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>100</y>
+          <width>461</width>
+          <height>261</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="show">
+        <property name="geometry">
+         <rect>
+          <x>630</x>
+          <y>230</y>
+          <width>111</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>show</string>
+        </property>
+       </widget>
+       <widget class="QWidget" name="layoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>600</x>
+          <y>170</y>
+          <width>190</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QLabel" name="label_code">
+          <widget class="QLabel" name="label_filepath">
            <property name="text">
-            <string>Participant Code: </string>
+            <string>File Path:</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLineEdit" name="line_code"/>
+          <widget class="QLineEdit" name="filepath"/>
          </item>
         </layout>
-       </item>
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QLabel" name="label_trial">
-           <property name="text">
-            <string>Trial:                     #</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLineEdit" name="line_trial"/>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QVBoxLayout" name="verticalLayout">
-         <item>
-          <widget class="QRadioButton" name="auto_complete">
-           <property name="text">
-            <string>Auto</string>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">button_group</string>
-           </attribute>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="overwritten">
-           <property name="text">
-            <string>Overwriten</string>
-           </property>
-           <attribute name="buttonGroup">
-            <string notr="true">button_group</string>
-           </attribute>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="start">
-         <property name="text">
-          <string>start</string>
-         </property>
-        </widget>
-       </item>
-      </layout>
+       </widget>
+       <widget class="QPushButton" name="exit">
+        <property name="geometry">
+         <rect>
+          <x>630</x>
+          <y>280</y>
+          <width>111</width>
+          <height>32</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>exit</string>
+        </property>
+       </widget>
+      </widget>
      </widget>
-     <widget class="QLabel" name="m_countdownLabel">
-      <property name="geometry">
-       <rect>
-        <x>160</x>
-        <y>450</y>
-        <width>531</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="sizeIncrement">
-       <size>
-        <width>20</width>
-        <height>20</height>
-       </size>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-     <widget class="QLabel" name="label_duration">
-      <property name="geometry">
-       <rect>
-        <x>70</x>
-        <y>390</y>
-        <width>729</width>
-        <height>31</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string/>
-      </property>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tab_2">
-     <attribute name="title">
-      <string>Dynamic</string>
-     </attribute>
-     <widget class="QCustomPlot" name="backdrop" native="true">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>100</y>
-        <width>461</width>
-        <height>261</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QPushButton" name="show">
-      <property name="geometry">
-       <rect>
-        <x>630</x>
-        <y>230</y>
-        <width>111</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>show</string>
-      </property>
-     </widget>
-     <widget class="QWidget" name="layoutWidget_3">
-      <property name="geometry">
-       <rect>
-        <x>600</x>
-        <y>170</y>
-        <width>190</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
-       <item>
-        <widget class="QLabel" name="label_filepath">
-         <property name="text">
-          <string>File Path:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLineEdit" name="filepath"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QPushButton" name="exit">
-      <property name="geometry">
-       <rect>
-        <x>630</x>
-        <y>280</y>
-        <width>111</width>
-        <height>32</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>exit</string>
-      </property>
-     </widget>
-    </widget>
-   </widget>
+    </item>
+   </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>988</width>
+     <width>936</width>
      <height>17</height>
     </rect>
    </property>
