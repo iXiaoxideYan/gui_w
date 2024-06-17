@@ -35,6 +35,9 @@ public:
 
     void readSerialData();
 
+signals:
+    void serialPortClosed();
+
 private slots:
 
     void handleDataReceived(const QByteArray &data);
@@ -47,54 +50,69 @@ private slots:
 
     void on_exit_clicked();
 
-    void timeout();
+    // void timeout();
 
 private:
     Ui::MainWindow *ui;
+    QTimer *m_countdownTimer;
+
+    QString m_savePath;
     QString m_configFilePath;
+    QString m_unvalidData = "0.00\r\n";
+
     QByteArray m_partialData;
     QByteArray m_completeData;
-    SerialPortReader *m_reader;
     QByteArray m_receivedData;
     QDateTime m_lastDataReceivedTime;
-    qint64 m_timeout;
-    QString m_savePath;
-    QTimer *m_timer;
-    qint64 m_expectedDataSize;
-    QString m_unvalidData = "0.00\r\n";
     QDateTime m_validDataStartTime;
+
+    qint64 m_timeout;
+    qint64 m_expectedDataSize;
+    int m_countdownValue;
     double m_displayDuration = 20.0;
+
     DataSmoother dataSmoother;
     GraphHandler *graphHandler;
     DataProcessor *dataProcessor;
+    SerialPortReader *m_reader;
     CountdownHandler *countdownHandler;
-    QTimer *m_countdownTimer;
-    int m_countdownValue;
 
     void setupUI();
-    // void configureGraph();
     void checkData(const QByteArray &data);
     void processData();
     bool isInvalidData();
-    bool isTimeoutReached(const QByteArray &validData);
+    bool isTimeoutReached();
+    bool isParticipantInfoEntered() const;
+    bool isDataComplete() const;
+    bool isRealTimeMode(const QString &filePath) const;
+
     void handleTimeout(const QByteArray &validData);
-    QByteArray extractValidData();
     void updateLastDataReceivedTime() {
         m_lastDataReceivedTime = QDateTime::currentDateTime();
     }
     void setValidDataTimerStart();
     void showErrorMessage();
-    bool isParticipantInfoEntered() const;
-    bool isDataComplete() const;
     void restructureIncompleteData(const QByteArray &data);
-    void clearPlot();
-    QString getFilePath() const;
-    bool isRealTimeMode(const QString &filePath) const;
     void handleRealTimeMode();
     void handleFileMode(const QString &filePath);
+    void handleSerialPortClosed();
+
     void plotData(const QVector<double> &xData, const QVector<double> &yData);
     void saveMaxValueToFile(QByteArray &rawData);
     void saveRawDataToFile(QByteArray &rawData);
+    void saveData(QByteArray completeData);
+
+    void clearCompleteDataCache();
+    void clearPartialDataCache();
+    void clearCache();
+    void resetLabels();
+    void clearPlot();
+
     QString generateFilePath(const QString &prefix, const QString &suffix);
+    QString getFilePath() const;
+    QString getDurationTime();
+
+    QByteArray extractValidData();
+    void saveAndResetData(QByteArray completeData);
 };
 #endif // MAINWINDOW_H

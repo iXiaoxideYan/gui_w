@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QtSerialPort/QSerialPort>
 #include <QJsonObject>
+#include <QTimer>
 
 class SerialPortReader : public QObject
 {
@@ -14,6 +15,7 @@ public:
     ~SerialPortReader();
 
     bool openSerialPort();
+
     void closeSerialPort();
 
     bool readConfigFromFile(const QString &filePath);
@@ -24,6 +26,8 @@ public:
 
 signals:
     void dataReceived(const QByteArray &data);
+
+    void portClosed();
 
 private slots:
     void handleReadyRead();
@@ -36,6 +40,15 @@ private:
     QSerialPort::StopBits m_stopBits;
     QSerialPort::Parity m_parity;
     QSerialPort::FlowControl m_flowControl;
+
+    QTimer *m_timer;
+    qint64 m_lastDataReceivedTime;
+    qint64 getCurrentTimeInMs();
+    void checkTimeout();
+    void setTimeoutCheck();
+    void stopTimeoutCheck();
+    void initializePort();
+
 };
 
 #endif // SERIALPORTREADER_H

@@ -11,17 +11,20 @@ class JsonManager : public QObject
 
 public:
     explicit JsonManager(QObject *parent = nullptr);
+
     JsonManager(const QString &filePath, QObject *parent = nullptr);
 
     bool readJsonFile();
+
     bool writeJsonFile();
-    QVariant getProperty(const QString &propertyName) const;
+
+    bool isJsonFileEmpty(QVariantMap config) const;
 
     void setJsonObject(const QJsonObject &jsonObject);
 
-    QJsonObject jsonObject() const;
+    QVariant getProperty(const QString &propertyName) const;
 
-    bool isJsonFileEmpty(QVariantMap config) const;
+    QJsonObject jsonObject() const;
 
 private:
     QString m_filePath;

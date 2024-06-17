@@ -73,15 +73,21 @@ bool fileExists(const QString &filePath) {
 
 bool checkFile(const QString &filePath) {
     if (fileExists(filePath)) {
+#ifdef DEBUG_MODE
         qDebug() << "File exists:" << filePath;
+#endif
         return true;
     }
 
     if (createFile(filePath)) {
+#ifdef DEBUG_MODE
         qDebug() << "File created successfully:" << filePath;
+#endif
         return true;
     } else {
+#ifdef DEBUG_MODE
         qWarning() << "Failed to create file:" << filePath;
+#endif
         return false;
     }
 }

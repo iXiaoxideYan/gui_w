@@ -54,3 +54,18 @@ QVector<double> DataProcessor::parseData(const QByteArray &data) const {
 
     return parsedData;
 }
+
+bool DataProcessor::areAllValuesZero(const QString &inputString)
+{
+    QRegularExpression re("\\b\\d+(\\.\\d+)?\\b");
+    QRegularExpressionMatch match = re.match(inputString);
+
+    while (match.hasMatch()) {
+        QString number = match.captured(0);
+        if (number.toDouble() != 0.00) {
+            return false;
+        }
+        match = re.match(inputString, match.capturedEnd());
+    }
+    return true;
+}

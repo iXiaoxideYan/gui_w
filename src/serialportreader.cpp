@@ -4,11 +4,16 @@
 #include <QFile>
 #include "jsonmanager.h"
 
+
 SerialPortReader::SerialPortReader(QObject *parent)
-    : QObject(parent), m_serialPort(nullptr)
+    : QObject(parent)
+    , m_serialPort(nullptr)
+    , m_timer(new QTimer(this))
+    , m_lastDataReceivedTime(0)
 {
     m_serialPort = new QSerialPort(this);
     connect(m_serialPort, &QSerialPort::readyRead, this, &SerialPortReader::handleReadyRead);
+    connect(m_timer, &QTimer::timeout, this, &SerialPortReader::checkTimeout);
 }
 
 SerialPortReader::~SerialPortReader()
@@ -16,7 +21,12 @@ SerialPortReader::~SerialPortReader()
     delete m_serialPort;
 }
 
-bool SerialPortReader::openSerialPort()
+void SerialPortReader::setTimeoutCheck()
+{
+    m_timer->start(1000);
+}
+
+void SerialPortReader::initializePort()
 {
     m_serialPort->setPortName(m_portName);
     m_serialPort->setBaudRate(m_baudRate);
@@ -24,6 +34,11 @@ bool SerialPortReader::openSerialPort()
     m_serialPort->setStopBits(m_stopBits);
     m_serialPort->setParity(m_parity);
     m_serialPort->setFlowControl(m_flowControl);
+}
+
+bool SerialPortReader::openSerialPort()
+{
+    initializePort();
 
     if (!m_serialPort->open(QIODevice::ReadOnly)) {
         qWarning() << "Failed to open serial port:" << m_serialPort->portName() << m_serialPort->errorString();
@@ -38,8 +53,16 @@ bool SerialPortReader::isSerialPortOpen() const {
 
 void SerialPortReader::closeSerialPort()
 {
-    if(this->isSerialPortOpen())
+    if (isSerialPortOpen()) {
         m_serialPort->close();
+        emit portClosed();
+        stopTimeoutCheck();
+
+#ifdef DEBUG_MODE // 1
+        qDebug() << "Serial port closed.";
+#endif
+
+    }
 }
 
 bool SerialPortReader::readConfigFromFile(const QString &filePath)
@@ -65,10 +88,19 @@ bool SerialPortReader::readConfigFromFile(const QString &filePath)
     return true;
 }
 
+
 void SerialPortReader::handleReadyRead()
 {
+    setTimeoutCheck();
     QByteArray data = m_serialPort->readAll();
-    emit dataReceived(data);
+    if (!data.isEmpty()) {
+        emit dataReceived(data);
+        m_lastDataReceivedTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    }
+}
+
+qint64 getCurrentTimeInMs(){
+    return QDateTime::currentDateTime().toMSecsSinceEpoch();
 }
 
 bool SerialPortReader::sendStartSignal()
@@ -88,4 +120,23 @@ bool SerialPortReader::sendStartSignal()
 
     qDebug() << "Start signal sent successfully!";
     return true;
+}
+
+void SerialPortReader::stopTimeoutCheck()
+{
+    m_timer->stop();
+}
+
+void SerialPortReader::checkTimeout()
+{
+    if(m_lastDataReceivedTime == 0){
+        return;
+    }
+    qDebug() << ">> Trigger: checkTimeout";
+    qint64 currentTime = QDateTime::currentDateTime().toMSecsSinceEpoch();
+    if (currentTime - m_lastDataReceivedTime > 1000) { // 1 seconds timeout
+        qWarning() << "Serial port timeout. No data received for 1 seconds.";
+        emit portClosed();
+        stopTimeoutCheck();
+    }
 }

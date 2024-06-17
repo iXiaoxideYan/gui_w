@@ -20,9 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     countdownHandler = new CountdownHandler(ui->m_countdownLabel, this);
     graphHandler = new GraphHandler(ui->backdrop, this);
-
-    m_timer = new QTimer(this);
-    connect(m_timer, &QTimer::timeout, this, &MainWindow::timeout);
 }
 
 MainWindow::~MainWindow()
@@ -66,6 +63,7 @@ void MainWindow::on_start_clicked()
     }
 
     connect(m_reader, &SerialPortReader::dataReceived, this, &MainWindow::handleDataReceived);
+    connect(m_reader, &SerialPortReader::portClosed, this, &MainWindow::handleSerialPortClosed);
 
     // this->m_reader->sendStartSignal();
 }
@@ -104,17 +102,17 @@ void MainWindow::saveRawDataToFile(QByteArray &rawData)
     saveListToCSV(raw, csvFile);
 }
 
-void MainWindow::handleTimeout(const QByteArray &validData) {
-    QByteArray completeData = validData;
+void MainWindow::saveData(QByteArray validData)
+{
+    QAbstractButton *button = ui->button_group->checkedButton();
 
-#ifdef DEBUG_MODE //1
-    qDebug() << ">>**************************************** Finished!";
-#endif
+    saveRawDataToFile(validData);
 
-    saveRawDataToFile(completeData);
+    saveMaxValueToFile(validData);
+}
 
-    saveMaxValueToFile(completeData);
-
+void MainWindow::resetLabels()
+{
     QAbstractButton *button = ui->button_group->checkedButton();
     if(button->text() == ui->auto_complete->text()){
         int trial_num = ui->line_trial->text().toInt();
@@ -125,40 +123,34 @@ void MainWindow::handleTimeout(const QByteArray &validData) {
         ui->line_trial->clear();
         ui->line_code->clear();
     }
+}
 
-    // Measure and log the time duration of the valid data processing
+QString MainWindow::getDurationTime()
+{
     QDateTime endTime = QDateTime::currentDateTime();
     qint64 duration = m_validDataStartTime.msecsTo(endTime);
     QString durationInfo = "Duration of the valid data processing: " + QString::number(duration) + " ms";
 
-#ifdef DEBUG_MODE //1
-    qDebug() << durationInfo;
-#endif
-
-    updateDurationInfo(durationInfo);
-
-    m_receivedData.clear();
-    m_lastDataReceivedTime = QDateTime::currentDateTime();
+    return durationInfo;
 }
 
-bool MainWindow::isTimeoutReached(const QByteArray &validData) {
+bool MainWindow::isTimeoutReached() {
 
 #ifdef DEBUG_MODE //1
     qDebug() << ">> Diff: " + QString::number(QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch());
 #endif
 
-    return (validData.size() >= m_expectedDataSize &&
-            QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout && m_completeData == m_unvalidData);
+    return (QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout && m_completeData == m_unvalidData);
 }
 
 QByteArray MainWindow::extractValidData() {
     QByteArray validData;
-    // int startIndex = m_receivedData.lastIndexOf(m_unvalidData);
+
 #ifdef DEBUG_MODE //1
-    // qDebug() << ">> startIndex: " + QString::number(startIndex);
     qDebug() << ">> m_receivedData: " + m_receivedData;
     qDebug() << ">> m_receivedData.length(): " + QString::number(m_receivedData.length());
 #endif
+
     if (m_receivedData.length() > m_expectedDataSize){
         validData = m_receivedData;
         updateLastDataReceivedTime();
@@ -171,6 +163,35 @@ void MainWindow::setValidDataTimerStart()
     m_validDataStartTime = QDateTime::currentDateTime();
 }
 
+void MainWindow::saveAndResetData(QByteArray completeData)
+{
+    saveData(completeData);
+
+    resetLabels();
+
+    // Measure and log the time duration of the valid data processing
+    QString durationInfo = getDurationTime();
+
+#ifdef DEBUG_MODE //1
+    qDebug() << durationInfo;
+#endif
+
+    updateDurationInfo(durationInfo);
+
+    clearCache();
+}
+
+void MainWindow::handleTimeout(const QByteArray &validData) {
+    QByteArray completeData = validData;
+
+#ifdef DEBUG_MODE //1
+    qDebug() << ">>**************************************** Finished!";
+#endif
+
+    saveAndResetData(completeData);
+    m_lastDataReceivedTime = QDateTime::currentDateTime();
+}
+
 bool MainWindow::isInvalidData() {
     return m_completeData == m_unvalidData;
 }
@@ -178,11 +199,15 @@ bool MainWindow::isInvalidData() {
 void MainWindow::processData()
 {
     if(isInvalidData()){
-        if (m_receivedData.length() > m_expectedDataSize && isTimeoutReached(m_receivedData)){
-            handleTimeout(m_receivedData);
-        }
         if (m_receivedData.length() < m_expectedDataSize){
             setValidDataTimerStart();
+        }
+        if(dataProcessor->areAllValuesZero(m_receivedData)){
+            clearCompleteDataCache();
+            return;
+        }
+        if (m_receivedData.length() > m_expectedDataSize && isTimeoutReached()){
+            handleTimeout(m_receivedData);
         }
         return;
     }
@@ -203,8 +228,9 @@ void MainWindow::processData()
         countdownHandler->startCountdown();
     }
 
-    m_receivedData.clear();
+    clearCompleteDataCache();
     m_receivedData.append(validData);
+
 #ifdef DEBUG_MODE
     qDebug() << "m_receivedData: " + m_receivedData;
 #endif
@@ -250,7 +276,7 @@ void MainWindow::checkData(const QByteArray &data) {
 
         m_completeData = m_partialData;
         processData();
-        m_partialData.clear();
+        clearPartialDataCache();
     }
 }
 
@@ -332,17 +358,6 @@ void MainWindow::on_show_clicked()
     }
 }
 
-void MainWindow::timeout()
-{
-    if (QDateTime::currentDateTime().toMSecsSinceEpoch() - m_lastDataReceivedTime.toMSecsSinceEpoch() >= m_timeout &&
-        m_receivedData.size() >= m_expectedDataSize) {
-#ifdef DEBUG_MODE //1
-        qDebug() << ">> timeout!";
-#endif
-        m_receivedData.clear();
-    }
-}
-
 void MainWindow::updateDurationInfo(const QString &info) {
     ui->label_duration->setText(info);
 }
@@ -353,4 +368,31 @@ void MainWindow::on_exit_clicked()
 
     ui->backdrop->clearPlottables();
     ui->backdrop->replot();
+}
+
+void MainWindow::clearCompleteDataCache()
+{
+    m_receivedData.clear();
+}
+
+void MainWindow::clearPartialDataCache(){
+    m_partialData.clear();
+}
+
+void MainWindow::clearCache(){
+    clearCompleteDataCache();
+
+    clearPartialDataCache();
+}
+
+void MainWindow::handleSerialPortClosed() {
+    qWarning() << "Serial port closed. Saving current valid data.";
+
+    QByteArray validData = extractValidData();
+    if (!validData.isEmpty()) {
+        // saveData(validData);
+        // clearCache();
+        // resetLabels();
+        saveAndResetData(validData);
+    }
 }
