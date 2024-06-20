@@ -98,7 +98,7 @@ void MainWindow::saveRawDataToFile(QByteArray &rawData)
 {
     QList<QByteArray> raw = dataProcessor->getRawData(rawData);
 
-    QString csvFile = generateFilePath("raw_data", ".csv");
+    QString csvFile = generateFilePath("rawdata", ".csv");
     saveListToCSV(raw, csvFile);
 }
 
